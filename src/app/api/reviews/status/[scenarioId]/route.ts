@@ -51,7 +51,12 @@ export async function GET(
         const hasWalkthrough = comments.issueComments.some(
           (c: { body?: string }) => c.body?.includes("## Walkthrough"),
         );
-        crCommentCount = comments.issueComments.length + comments.reviewComments.length;
+        // Filter out non-review comments (e.g. "Review skipped", config notices)
+        const reviewComments = comments.issueComments.filter(
+          (c: { body?: string }) =>
+            c.body && !c.body.includes("Review skipped") && !c.body.includes("skip review"),
+        );
+        crCommentCount = reviewComments.length + comments.reviewComments.length;
         crStatus = hasWalkthrough ? "complete" : crCommentCount > 0 ? "in_progress" : "idle";
       }
     }
