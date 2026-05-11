@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { ComparisonAnalysis, ScenarioResults } from "@/types/reviews";
 import { Scenario } from "@/types/reviews";
 
-const LLM_PROVIDER = process.env.LLM_PROVIDER || "anthropic";
+export type LLMProvider = "anthropic" | "openai";
 
 function buildAnalysisPrompt(scenario: Scenario, results: ScenarioResults): string {
   return `You are a neutral code review analyst. You have been given the findings from two AI code review tools (CodeRabbit and GitHub Copilot) reviewing the same pull request.
@@ -50,12 +50,14 @@ Respond with valid JSON matching this structure:
 export async function generateAnalysis(
   scenario: Scenario,
   results: ScenarioResults,
+  provider?: LLMProvider,
 ): Promise<ComparisonAnalysis> {
+  const selectedProvider = provider || (process.env.LLM_PROVIDER as LLMProvider) || "anthropic";
   const prompt = buildAnalysisPrompt(scenario, results);
 
   let rawResponse: string;
 
-  if (LLM_PROVIDER === "anthropic") {
+  if (selectedProvider === "anthropic") {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const message = await client.messages.create({
       model: "claude-sonnet-4-20250514",

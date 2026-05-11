@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getScenario } from "@/lib/pr-config";
 import { resolveScenarioPRs, getCodeRabbitComments, getCopilotComments } from "@/lib/github";
-import { generateAnalysis } from "@/lib/llm";
+import { generateAnalysis, LLMProvider } from "@/lib/llm";
 import { ScenarioResults, ReviewComment } from "@/types/reviews";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ scenarioId: string }> },
 ) {
   const session = await auth();
@@ -15,6 +15,8 @@ export async function POST(
   }
 
   const { scenarioId } = await params;
+  const body = await req.json().catch(() => ({}));
+  const provider = (body.provider as LLMProvider) || undefined;
   const scenario = getScenario(parseInt(scenarioId));
 
   if (!scenario) {
@@ -70,7 +72,7 @@ export async function POST(
     },
   };
 
-  const analysis = await generateAnalysis(scenario, results);
+  const analysis = await generateAnalysis(scenario, results, provider);
 
-  return NextResponse.json(analysis);
+  return NextResponse.json({ ...analysis, analyzedBy: provider || process.env.LLM_PROVIDER || "anthropic" });
 }
