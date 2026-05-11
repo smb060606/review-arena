@@ -1,5 +1,8 @@
+"use client";
+
 import { SCENARIOS, PROJECT_CONTEXT } from "@/lib/pr-config";
 import Link from "next/link";
+import { useState } from "react";
 import { ToolsBanner } from "@/components/ToolsBanner";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -10,6 +13,28 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<{
+    closed: string[];
+    created: string[];
+    errors: string[];
+  } | null>(null);
+
+  async function handleReset() {
+    setResetting(true);
+    setResetResult(null);
+    try {
+      const res = await fetch("/api/environment/reset", { method: "POST" });
+      const data = await res.json();
+      setResetResult(data);
+    } catch {
+      setResetResult({ closed: [], created: [], errors: ["Network error during reset"] });
+    }
+    setResetting(false);
+    setShowResetConfirm(false);
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       <ToolsBanner />
@@ -26,7 +51,7 @@ export default function DashboardPage() {
       </div>
 
       {/* About the project being reviewed */}
-      <div className="mb-10 p-6 bg-[var(--card)] border border-[var(--border)] rounded-xl">
+      <div className="mb-8 p-6 bg-[var(--card)] border border-[var(--border)] rounded-xl">
         <h2 className="text-lg font-semibold mb-3">The project being reviewed</h2>
         <div className="grid grid-cols-[1fr_auto] gap-6">
           <div className="space-y-3 text-sm text-[var(--muted-foreground)]">
@@ -52,9 +77,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* How it works — moved above scenarios */}
+      <div className="mb-8 p-6 bg-[var(--card)] border border-[var(--border)] rounded-xl">
+        <h3 className="font-semibold mb-3">How it works</h3>
+        <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--muted-foreground)]">
+          <li><span className="font-medium text-[var(--foreground)]">Pick a scenario</span> &mdash; each one is a pull request that adds a new feature to the TeamForge API, with realistic bugs intentionally injected into the code</li>
+          <li><span className="font-medium text-[var(--foreground)]">Trigger reviews</span> &mdash; this sends the PR to both CodeRabbit and GitHub Copilot simultaneously, each reviewing their own isolated copy</li>
+          <li><span className="font-medium text-[var(--foreground)]">Wait for results</span> &mdash; both tools analyze the code independently (typically 1-3 minutes each)</li>
+          <li><span className="font-medium text-[var(--foreground)]">Compare findings</span> &mdash; see what each tool found side-by-side, then generate a neutral AI analysis of their performance</li>
+          <li><span className="font-medium text-[var(--foreground)]">Reset &amp; repeat</span> &mdash; after reviewing the results, reset the environment to start fresh with new pull requests</li>
+        </ol>
+      </div>
+
       {/* Scenarios */}
       <h2 className="text-lg font-semibold mb-4">Choose a scenario to compare</h2>
-      <div className="grid gap-6 mb-10">
+      <div className="grid gap-6 mb-8">
         {SCENARIOS.map((scenario) => {
           const bugsByCategory: Record<string, number> = {};
           for (const bug of scenario.injectedBugs) {
@@ -109,15 +146,110 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* How it works */}
+      {/* Reset environment */}
       <div className="p-6 bg-[var(--card)] border border-[var(--border)] rounded-xl">
-        <h3 className="font-semibold mb-3">How it works</h3>
-        <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--muted-foreground)]">
-          <li><span className="font-medium text-[var(--foreground)]">Pick a scenario</span> &mdash; each one is a pull request that adds a new feature to the TeamForge API, with realistic bugs intentionally injected into the code</li>
-          <li><span className="font-medium text-[var(--foreground)]">Trigger reviews</span> &mdash; this sends the PR to both CodeRabbit and GitHub Copilot simultaneously, each reviewing their own isolated copy</li>
-          <li><span className="font-medium text-[var(--foreground)]">Wait for results</span> &mdash; both tools analyze the code independently (typically 1-3 minutes each)</li>
-          <li><span className="font-medium text-[var(--foreground)]">Compare findings</span> &mdash; see what each tool found side-by-side, then generate a neutral AI analysis of their performance</li>
-        </ol>
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-semibold mb-1">Reset Comparison Environment</h3>
+            <p className="text-sm text-[var(--muted-foreground)] max-w-2xl">
+              Already ran a comparison? Reset the environment to start fresh. This is useful when you want
+              to re-run the comparison from scratch or demo the tool to someone new.
+            </p>
+          </div>
+          {!showResetConfirm && !resetResult && (
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="shrink-0 px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--muted)] transition-colors"
+            >
+              Reset Environment
+            </button>
+          )}
+        </div>
+
+        {/* Confirmation */}
+        {showResetConfirm && (
+          <div className="mt-4 p-4 bg-[var(--muted)] rounded-lg border border-yellow-800/50">
+            <p className="text-sm font-medium text-yellow-400 mb-2">Are you sure?</p>
+            <p className="text-sm text-[var(--muted-foreground)] mb-1">Resetting will:</p>
+            <ul className="text-sm text-[var(--muted-foreground)] list-disc list-inside mb-4 space-y-1">
+              <li><span className="font-medium text-[var(--foreground)]">Close</span> all 6 open pull requests on GitHub (without merging them)</li>
+              <li><span className="font-medium text-[var(--foreground)]">Discard</span> all review comments that CodeRabbit and Copilot posted on those PRs</li>
+              <li><span className="font-medium text-[var(--foreground)]">Create</span> 6 fresh pull requests from the same branches with the same code</li>
+              <li>The new PRs will have <span className="font-medium text-[var(--foreground)]">no reviews yet</span>, ready for a new comparison run</li>
+            </ul>
+            <p className="text-xs text-[var(--muted-foreground)] mb-4">
+              The underlying code and bugs are unchanged &mdash; only the PRs and their review comments are replaced.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleReset}
+                disabled={resetting}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {resetting ? "Resetting..." : "Confirm Reset"}
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--muted)] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reset result */}
+        {resetResult && (
+          <div className="mt-4 p-4 bg-[var(--muted)] rounded-lg">
+            <p className="text-sm font-medium text-green-400 mb-3">Environment reset complete</p>
+
+            {resetResult.closed.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-[var(--foreground)] mb-1">Closed PRs (reviews discarded):</p>
+                <ul className="text-xs text-[var(--muted-foreground)] space-y-0.5">
+                  {resetResult.closed.map((pr, i) => (
+                    <li key={i} className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"></span>
+                      {pr}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {resetResult.created.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-[var(--foreground)] mb-1">New PRs created (ready for review):</p>
+                <ul className="text-xs text-[var(--muted-foreground)] space-y-0.5">
+                  {resetResult.created.map((pr, i) => (
+                    <li key={i} className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"></span>
+                      {pr}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {resetResult.errors.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-red-400 mb-1">Errors:</p>
+                <ul className="text-xs text-red-300 space-y-0.5">
+                  {resetResult.errors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setResetResult(null); window.location.reload(); }}
+              className="mt-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Start New Comparison
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
