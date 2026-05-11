@@ -53,12 +53,23 @@ export async function triggerCodeRabbit(prNumber: number) {
   });
 }
 
-// Trigger Copilot review by requesting as reviewer
-export async function triggerCopilot(prNumber: number) {
-  return githubFetch(`/pulls/${prNumber}/requested_reviewers`, {
-    method: "POST",
-    body: JSON.stringify({ reviewers: ["copilot"] }),
-  });
+// Trigger Copilot review via gh CLI
+// Copilot cannot be requested via the REST API — only gh CLI (v2.88.0+) supports it.
+// See: https://github.blog/changelog/2026-03-11-request-copilot-code-review-from-github-cli/
+export async function triggerCopilot(prNumber: number): Promise<{ success: boolean; error?: string }> {
+  const { exec } = await import("child_process");
+  const { promisify } = await import("util");
+  const execAsync = promisify(exec);
+
+  try {
+    await execAsync(
+      `gh pr edit ${prNumber} --add-reviewer @copilot --repo ${GITHUB_OWNER}/${GITHUB_REPO}`,
+    );
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to request Copilot review: ${message}`);
+  }
 }
 
 // Check CodeRabbit status via Check Runs API
