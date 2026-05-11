@@ -158,23 +158,33 @@ export default function ScenarioPage() {
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 mb-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold">Review Status</h3>
-          {!triggered && (
+          <div className="flex items-center gap-3">
+            {triggered && !isComplete && (
+              <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+                <span className="inline-block w-3 h-3 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></span>
+                Waiting for reviews...
+              </div>
+            )}
+            {isComplete && (
+              <button
+                onClick={() => router.push(`/compare/${scenarioId}`)}
+                className="px-5 py-2 bg-green-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+              >
+                View Comparison
+              </button>
+            )}
             <button
               onClick={handleTrigger}
-              disabled={triggering}
-              className="px-5 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              disabled={triggered || triggering}
+              className={`px-5 py-2 rounded-lg font-medium transition-opacity ${
+                triggered
+                  ? "bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed opacity-50"
+                  : "bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
+              }`}
             >
-              {triggering ? "Triggering..." : "Trigger Reviews"}
+              {triggering ? "Triggering..." : triggered ? "Reviews Triggered" : "Trigger Reviews"}
             </button>
-          )}
-          {isComplete && (
-            <button
-              onClick={() => router.push(`/compare/${scenarioId}`)}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-            >
-              View Comparison
-            </button>
-          )}
+          </div>
         </div>
         <p className="text-xs text-[var(--muted-foreground)] mb-4">
           Clicking &quot;Trigger Reviews&quot; sends the PR to both tools simultaneously. Each tool reviews its own
