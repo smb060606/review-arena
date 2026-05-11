@@ -60,7 +60,7 @@ export async function generateAnalysis(
   if (selectedProvider === "anthropic") {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-opus-4-7",
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt }],
     });
@@ -69,7 +69,7 @@ export async function generateAnalysis(
   } else {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.5",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 4096,
       response_format: { type: "json_object" },
