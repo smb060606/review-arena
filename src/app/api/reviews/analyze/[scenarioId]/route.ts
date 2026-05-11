@@ -55,7 +55,7 @@ export async function POST(
           createdAt: c.created_at || "",
         }),
       ) as ReviewComment[],
-      rawCommentCount: crComments.issueComments.length + crComments.reviewComments.length,
+      rawCommentCount: crComments.reviewComments.length,
     },
     copilot: {
       summary: copilotComments.reviews[0]?.body || "",
@@ -68,7 +68,7 @@ export async function POST(
           createdAt: c.created_at || "",
         }),
       ) as ReviewComment[],
-      rawCommentCount: copilotComments.reviews.length + copilotComments.reviewComments.length,
+      rawCommentCount: copilotComments.reviewComments.length,
     },
   };
 

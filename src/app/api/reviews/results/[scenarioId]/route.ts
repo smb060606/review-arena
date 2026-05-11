@@ -64,12 +64,12 @@ export async function GET(
     coderabbit: {
       summary: crSummary?.body || "No summary available",
       inlineComments: crInlineComments,
-      rawCommentCount: crComments.issueComments.length + crComments.reviewComments.length,
+      rawCommentCount: crComments.reviewComments.length,
     },
     copilot: {
       summary: copilotSummary,
       inlineComments: copilotInlineComments,
-      rawCommentCount: copilotComments.reviews.length + copilotComments.reviewComments.length,
+      rawCommentCount: copilotComments.reviewComments.length,
     },
   };
 
