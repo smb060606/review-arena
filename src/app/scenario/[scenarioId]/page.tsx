@@ -57,8 +57,9 @@ export default function ScenarioPage() {
     setTriggering(false);
   }
 
-  const crStatus = status?.coderabbit.status || "idle";
-  const copilotStatus = status?.copilot.status || "idle";
+  // Only show live review status after user triggers — before that, always show "idle"
+  const crStatus = triggered ? (status?.coderabbit.status || "idle") : "idle";
+  const copilotStatus = triggered ? (status?.copilot.status || "idle") : "idle";
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
