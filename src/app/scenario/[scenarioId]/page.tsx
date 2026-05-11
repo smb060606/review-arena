@@ -206,7 +206,7 @@ export default function ScenarioPage() {
             </div>
             {status?.coderabbit.commentCount !== undefined && status.coderabbit.commentCount > 0 && (
               <div className="text-xs text-[var(--muted-foreground)] mt-1">
-                {status.coderabbit.commentCount} comments
+                {status.coderabbit.commentCount} findings
               </div>
             )}
             {status?.coderabbit.prNumber ? (
@@ -225,9 +225,9 @@ export default function ScenarioPage() {
             <div className={`font-semibold ${STATUS_CONFIG[copilotStatus].color}`}>
               {STATUS_CONFIG[copilotStatus].label}
             </div>
-            {status?.copilot.reviewCount !== undefined && status.copilot.reviewCount > 0 && (
+            {status?.copilot.commentCount !== undefined && status.copilot.commentCount > 0 && (
               <div className="text-xs text-[var(--muted-foreground)] mt-1">
-                {status.copilot.reviewCount} reviews
+                {status.copilot.commentCount} findings
               </div>
             )}
             {status?.copilot.prNumber ? (

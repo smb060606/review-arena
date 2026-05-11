@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getScenario } from "@/lib/pr-config";
-import { resolveScenarioPRs, getCodeRabbitCheckRuns, getCopilotReviews, isCopilotRequested, getCodeRabbitComments } from "@/lib/github";
+import { resolveScenarioPRs, getCodeRabbitCheckRuns, getCopilotReviews, getCopilotComments, isCopilotRequested, getCodeRabbitComments } from "@/lib/github";
 import { ScenarioStatus, ReviewToolStatus } from "@/types/reviews";
 
 export async function GET(
@@ -65,12 +65,16 @@ export async function GET(
   }
 
   // Check Copilot via Reviews API + requested reviewers
+  let copilotCommentCount = 0;
   try {
     if (copilotPr) {
       const reviews = await getCopilotReviews(copilotPr);
       copilotReviewCount = reviews.length;
       if (reviews.some((r: { state?: string }) => r.state === "COMMENTED" || r.state === "CHANGES_REQUESTED")) {
         copilotStatus = "complete";
+        // Count inline comments for the findings count
+        const comments = await getCopilotComments(copilotPr);
+        copilotCommentCount = comments.reviewComments.length;
       } else if (copilotReviewCount > 0) {
         copilotStatus = "in_progress";
       } else {
@@ -95,6 +99,7 @@ export async function GET(
     copilot: {
       prNumber: copilotPr || 0,
       status: copilotStatus,
+      commentCount: copilotCommentCount,
       reviewCount: copilotReviewCount,
     },
   };
