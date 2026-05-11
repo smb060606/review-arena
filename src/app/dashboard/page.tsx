@@ -242,12 +242,9 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <button
-              onClick={() => { setResetResult(null); window.location.reload(); }}
-              className="mt-2 px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Start New Comparison
-            </button>
+            <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+              Fresh PRs are ready. Pick a scenario above to start a new comparison.
+            </p>
           </div>
         )}
       </div>
