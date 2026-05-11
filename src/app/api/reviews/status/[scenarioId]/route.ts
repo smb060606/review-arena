@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getScenario } from "@/lib/pr-config";
-import { resolveScenarioPRs, getCodeRabbitCheckRuns, getCopilotReviews, getCodeRabbitComments } from "@/lib/github";
+import { resolveScenarioPRs, getCodeRabbitCheckRuns, getCopilotReviews, isCopilotRequested, getCodeRabbitComments } from "@/lib/github";
 import { ScenarioStatus, ReviewToolStatus } from "@/types/reviews";
 
 export async function GET(
@@ -64,7 +64,7 @@ export async function GET(
     crStatus = "error";
   }
 
-  // Check Copilot via Reviews API
+  // Check Copilot via Reviews API + requested reviewers
   try {
     if (copilotPr) {
       const reviews = await getCopilotReviews(copilotPr);
@@ -73,6 +73,12 @@ export async function GET(
         copilotStatus = "complete";
       } else if (copilotReviewCount > 0) {
         copilotStatus = "in_progress";
+      } else {
+        // Check if Copilot is assigned as reviewer but hasn't finished yet
+        const requested = await isCopilotRequested(copilotPr);
+        if (requested) {
+          copilotStatus = "in_progress";
+        }
       }
     }
   } catch {

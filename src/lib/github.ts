@@ -133,6 +133,14 @@ export async function getCopilotComments(prNumber: number) {
   return { reviews: copilotReviews, reviewComments: copilotComments };
 }
 
+// Check if Copilot is a requested reviewer (assigned but hasn't finished)
+export async function isCopilotRequested(prNumber: number): Promise<boolean> {
+  const data = await githubFetch(`/pulls/${prNumber}/requested_reviewers`);
+  return data.users?.some(
+    (u: { login?: string }) => u.login?.toLowerCase() === "copilot"
+  ) ?? false;
+}
+
 // Close a PR
 export async function closePullRequest(prNumber: number) {
   return githubFetch(`/pulls/${prNumber}`, {
