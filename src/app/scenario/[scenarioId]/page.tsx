@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { SCENARIOS, PROJECT_CONTEXT } from "@/lib/pr-config";
+import { SCENARIOS, PROJECT_CONTEXT, prUrl } from "@/lib/pr-config";
 import { useReviewPolling } from "@/hooks/useReviewPolling";
 import { ReviewToolStatus } from "@/types/reviews";
 import { ToolsBanner, ToolLabel } from "@/components/ToolsBanner";
@@ -198,6 +198,16 @@ export default function ScenarioPage() {
                 {status.coderabbit.commentCount} comments
               </div>
             )}
+            {status?.coderabbit.prNumber ? (
+              <a
+                href={prUrl(status.coderabbit.prNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 text-xs text-[var(--accent)] hover:underline"
+              >
+                View PR #{status.coderabbit.prNumber} on GitHub &rarr;
+              </a>
+            ) : null}
           </div>
           <div className={`p-4 rounded-lg border border-[var(--border)] ${STATUS_CONFIG[copilotStatus].bg}`}>
             <div className="mb-2"><ToolLabel tool="copilot" /></div>
@@ -209,6 +219,16 @@ export default function ScenarioPage() {
                 {status.copilot.reviewCount} reviews
               </div>
             )}
+            {status?.copilot.prNumber ? (
+              <a
+                href={prUrl(status.copilot.prNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 text-xs text-[var(--accent)] hover:underline"
+              >
+                View PR #{status.copilot.prNumber} on GitHub &rarr;
+              </a>
+            ) : null}
           </div>
         </div>
       </div>

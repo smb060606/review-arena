@@ -1,5 +1,11 @@
 import { Scenario } from "@/types/reviews";
 
+export const REPO_URL = "https://github.com/smb060606/teamforge-api";
+
+export function prUrl(prNumber: number) {
+  return `${REPO_URL}/pull/${prNumber}`;
+}
+
 export const PROJECT_CONTEXT = {
   name: "TeamForge API",
   description:

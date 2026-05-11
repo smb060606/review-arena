@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ScenarioStatus } from "@/types/reviews";
 
-export function useReviewPolling(scenarioId: number, enabled: boolean) {
+export function useReviewPolling(scenarioId: number, polling: boolean) {
   const [status, setStatus] = useState<ScenarioStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,13 +22,17 @@ export function useReviewPolling(scenarioId: number, enabled: boolean) {
     }
   }, [scenarioId]);
 
+  // Always fetch once on mount to resolve PR numbers
   useEffect(() => {
-    if (!enabled) return;
-
     poll();
+  }, [poll]);
+
+  // Continue polling at interval only when enabled
+  useEffect(() => {
+    if (!polling) return;
     const interval = setInterval(poll, 12000);
     return () => clearInterval(interval);
-  }, [enabled, poll]);
+  }, [polling, poll]);
 
   const isComplete =
     status?.coderabbit.status === "complete" &&

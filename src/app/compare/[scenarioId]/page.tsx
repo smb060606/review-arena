@@ -2,8 +2,8 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { SCENARIOS } from "@/lib/pr-config";
-import { ScenarioResults, ComparisonAnalysis } from "@/types/reviews";
+import { SCENARIOS, prUrl } from "@/lib/pr-config";
+import { ScenarioResults, ScenarioStatus, ComparisonAnalysis } from "@/types/reviews";
 import { ToolsBanner, ToolLabel } from "@/components/ToolsBanner";
 
 type LLMProvider = "anthropic" | "openai";
@@ -15,11 +15,20 @@ export default function ComparePage() {
   const scenario = SCENARIOS.find((s) => s.id === scenarioId);
 
   const [results, setResults] = useState<ScenarioResults | null>(null);
+  const [prStatus, setPrStatus] = useState<ScenarioStatus | null>(null);
   const [analysis, setAnalysis] = useState<(ComparisonAnalysis & { analyzedBy?: string }) | null>(null);
   const [loadingResults, setLoadingResults] = useState(true);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [error, setError] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<LLMProvider>("anthropic");
+
+  useEffect(() => {
+    // Fetch PR numbers
+    fetch(`/api/reviews/status/${scenarioId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setPrStatus(data); })
+      .catch(() => {});
+  }, [scenarioId]);
 
   useEffect(() => {
     async function fetchResults() {
@@ -80,7 +89,14 @@ export default function ComparePage() {
           <div className="grid grid-cols-2 gap-4 mb-8">
             {/* CodeRabbit */}
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5">
-              <div className="mb-3"><ToolLabel tool="coderabbit" /></div>
+              <div className="flex items-center justify-between mb-3">
+                <ToolLabel tool="coderabbit" />
+                {prStatus?.coderabbit.prNumber ? (
+                  <a href={prUrl(prStatus.coderabbit.prNumber)} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--accent)] hover:underline">
+                    PR #{prStatus.coderabbit.prNumber} &rarr;
+                  </a>
+                ) : null}
+              </div>
               <div className="text-sm text-[var(--muted-foreground)] mb-2">
                 {results.coderabbit.rawCommentCount} total comments
               </div>
@@ -101,7 +117,14 @@ export default function ComparePage() {
 
             {/* Copilot */}
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5">
-              <div className="mb-3"><ToolLabel tool="copilot" /></div>
+              <div className="flex items-center justify-between mb-3">
+                <ToolLabel tool="copilot" />
+                {prStatus?.copilot.prNumber ? (
+                  <a href={prUrl(prStatus.copilot.prNumber)} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--accent)] hover:underline">
+                    PR #{prStatus.copilot.prNumber} &rarr;
+                  </a>
+                ) : null}
+              </div>
               <div className="text-sm text-[var(--muted-foreground)] mb-2">
                 {results.copilot.rawCommentCount} total comments
               </div>
