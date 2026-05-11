@@ -65,6 +65,4 @@ export interface Scenario {
   }[];
   coderabbitBranch: string;
   copilotBranch: string;
-  coderabbitPrNumber: number;
-  copilotPrNumber: number;
 }

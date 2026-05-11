@@ -23,8 +23,6 @@ export const SCENARIOS: Scenario[] = [
     ],
     coderabbitBranch: "feature/deployment-pipeline-coderabbit",
     copilotBranch: "feature/deployment-pipeline-copilot",
-    coderabbitPrNumber: 1,
-    copilotPrNumber: 2,
   },
   {
     id: 2,
@@ -49,8 +47,6 @@ export const SCENARIOS: Scenario[] = [
     ],
     coderabbitBranch: "feature/incident-management-coderabbit",
     copilotBranch: "feature/incident-management-copilot",
-    coderabbitPrNumber: 3,
-    copilotPrNumber: 4,
   },
   {
     id: 3,
@@ -76,8 +72,6 @@ export const SCENARIOS: Scenario[] = [
     ],
     coderabbitBranch: "feature/analytics-dashboard-coderabbit",
     copilotBranch: "feature/analytics-dashboard-copilot",
-    coderabbitPrNumber: 5,
-    copilotPrNumber: 6,
   },
 ];
 

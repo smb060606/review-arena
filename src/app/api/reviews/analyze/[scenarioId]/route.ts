@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getScenario } from "@/lib/pr-config";
-import { getCodeRabbitComments, getCopilotComments } from "@/lib/github";
+import { resolveScenarioPRs, getCodeRabbitComments, getCopilotComments } from "@/lib/github";
 import { generateAnalysis } from "@/lib/llm";
 import { ScenarioResults, ReviewComment } from "@/types/reviews";
 
@@ -21,9 +21,21 @@ export async function POST(
     return NextResponse.json({ error: "Invalid scenario" }, { status: 400 });
   }
 
+  const { coderabbitPr, copilotPr } = await resolveScenarioPRs(
+    scenario.coderabbitBranch,
+    scenario.copilotBranch,
+  );
+
+  if (!coderabbitPr || !copilotPr) {
+    return NextResponse.json(
+      { error: "Open PRs not found for this scenario." },
+      { status: 400 },
+    );
+  }
+
   // Fetch results from both tools
-  const crComments = await getCodeRabbitComments(scenario.coderabbitPrNumber);
-  const copilotComments = await getCopilotComments(scenario.copilotPrNumber);
+  const crComments = await getCodeRabbitComments(coderabbitPr);
+  const copilotComments = await getCopilotComments(copilotPr);
 
   const crSummary = crComments.issueComments.find(
     (c: { body?: string }) => c.body?.includes("## Walkthrough"),

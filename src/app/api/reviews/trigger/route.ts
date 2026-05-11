@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getScenario } from "@/lib/pr-config";
-import { triggerCodeRabbit, triggerCopilot } from "@/lib/github";
+import { triggerCodeRabbit, triggerCopilot, resolveScenarioPRs } from "@/lib/github";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -16,9 +16,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid scenario" }, { status: 400 });
   }
 
-  if (!scenario.coderabbitPrNumber || !scenario.copilotPrNumber) {
+  const { coderabbitPr, copilotPr } = await resolveScenarioPRs(
+    scenario.coderabbitBranch,
+    scenario.copilotBranch,
+  );
+
+  if (!coderabbitPr || !copilotPr) {
     return NextResponse.json(
-      { error: "PR numbers not configured. Please set PR numbers in pr-config.ts" },
+      { error: "Open PRs not found for this scenario. Try resetting the environment first." },
       { status: 400 },
     );
   }
@@ -26,14 +31,14 @@ export async function POST(req: NextRequest) {
   const results = { coderabbit: "pending", copilot: "pending" };
 
   try {
-    await triggerCodeRabbit(scenario.coderabbitPrNumber);
+    await triggerCodeRabbit(coderabbitPr);
     results.coderabbit = "triggered";
   } catch (err) {
     results.coderabbit = `error: ${(err as Error).message}`;
   }
 
   try {
-    await triggerCopilot(scenario.copilotPrNumber);
+    await triggerCopilot(copilotPr);
     results.copilot = "triggered";
   } catch (err) {
     results.copilot = `error: ${(err as Error).message}`;

@@ -25,6 +25,26 @@ async function githubFetch(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+// Look up the open PR number for a given head branch
+// Branch names are stable; PR numbers change after each reset
+export async function findOpenPRByBranch(branch: string): Promise<number | null> {
+  const prs = await githubFetch(`/pulls?state=open&head=${GITHUB_OWNER}:${branch}`);
+  if (prs.length === 0) return null;
+  return prs[0].number;
+}
+
+// Resolve both PR numbers for a scenario's branches
+export async function resolveScenarioPRs(
+  coderabbitBranch: string,
+  copilotBranch: string,
+): Promise<{ coderabbitPr: number | null; copilotPr: number | null }> {
+  const [coderabbitPr, copilotPr] = await Promise.all([
+    findOpenPRByBranch(coderabbitBranch),
+    findOpenPRByBranch(copilotBranch),
+  ]);
+  return { coderabbitPr, copilotPr };
+}
+
 // Trigger CodeRabbit review by posting a comment
 export async function triggerCodeRabbit(prNumber: number) {
   return githubFetch(`/issues/${prNumber}/comments`, {
