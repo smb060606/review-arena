@@ -97,11 +97,39 @@ export async function getCopilotReviews(prNumber: number) {
   );
 }
 
+// Parse "Additional comments" embedded in CodeRabbit's review body
+function parseAdditionalComments(reviewBody: string): { path: string; line: string; body: string }[] {
+  const results: { path: string; line: string; body: string }[] = [];
+  const additionalMatch = reviewBody.match(/Additional comments[\s\S]*?<\/details>\s*<\/blockquote>\s*<\/details>/);
+  if (!additionalMatch) return results;
+
+  const section = additionalMatch[0];
+  // Match each file's comments: <summary>filename (count)</summary> ... `line-range`: **body**
+  const filePattern = /<summary>([^<]+?)\s*\(\d+\)<\/summary><blockquote>([\s\S]*?)<\/blockquote><\/details>/g;
+  let fileMatch;
+  while ((fileMatch = filePattern.exec(section)) !== null) {
+    const filePath = fileMatch[1].trim();
+    const fileContent = fileMatch[2];
+    // Match individual comments: `line-range`: **title** \n description
+    const commentPattern = /`(\d+(?:-\d+)?)`:?\s*\*\*(.*?)\*\*([\s\S]*?)(?=`\d|$)/g;
+    let commentMatch;
+    while ((commentMatch = commentPattern.exec(fileContent)) !== null) {
+      const lineRange = commentMatch[1];
+      const title = commentMatch[2].trim();
+      const description = commentMatch[3].trim().replace(/<\/blockquote>[\s\S]*$/, '').trim();
+      const body = description ? `**${title}**\n${description}` : `**${title}**`;
+      results.push({ path: filePath, line: lineRange, body });
+    }
+  }
+  return results;
+}
+
 // Get CodeRabbit review comments
 export async function getCodeRabbitComments(prNumber: number) {
-  const [issueComments, reviewComments] = await Promise.all([
+  const [issueComments, reviewComments, reviews] = await Promise.all([
     githubFetch(`/issues/${prNumber}/comments`),
     githubFetch(`/pulls/${prNumber}/comments`),
+    githubFetch(`/pulls/${prNumber}/reviews`),
   ]);
 
   const crIssueComments = issueComments.filter(
@@ -111,7 +139,24 @@ export async function getCodeRabbitComments(prNumber: number) {
     (c: { user?: { login?: string } }) => c.user?.login?.includes("coderabbit")
   );
 
-  return { issueComments: crIssueComments, reviewComments: crReviewComments };
+  // Extract additional comments from CodeRabbit's review body
+  const crReview = reviews.find(
+    (r: { user?: { login?: string } }) => r.user?.login?.includes("coderabbit")
+  );
+  const additionalComments = crReview ? parseAdditionalComments(crReview.body || "") : [];
+  // Convert to the same shape as inline review comments
+  const additionalAsComments = additionalComments.map((c) => ({
+    path: c.path,
+    line: parseInt(c.line.split("-")[0]),
+    body: c.body,
+    user: { login: "coderabbitai[bot]" },
+    created_at: crReview?.submitted_at || "",
+  }));
+
+  return {
+    issueComments: crIssueComments,
+    reviewComments: [...crReviewComments, ...additionalAsComments],
+  };
 }
 
 // Get Copilot review comments
