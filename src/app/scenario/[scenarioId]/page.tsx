@@ -57,9 +57,11 @@ export default function ScenarioPage() {
     setTriggering(false);
   }
 
-  // Only show live review status after user triggers — before that, always show "idle"
-  const crStatus = triggered ? (status?.coderabbit.status || "idle") : "idle";
-  const copilotStatus = triggered ? (status?.copilot.status || "idle") : "idle";
+  const crStatus = status?.coderabbit.status || "idle";
+  const copilotStatus = status?.copilot.status || "idle";
+
+  // If reviews are already in progress or complete on GitHub, reflect that
+  const reviewsActive = triggered || crStatus !== "idle" || copilotStatus !== "idle";
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -159,7 +161,7 @@ export default function ScenarioPage() {
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold">Review Status</h3>
           <div className="flex items-center gap-3">
-            {triggered && !isComplete && (
+            {reviewsActive && !isComplete && (
               <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
                 <span className="inline-block w-3 h-3 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></span>
                 Waiting for reviews...
@@ -175,14 +177,14 @@ export default function ScenarioPage() {
             )}
             <button
               onClick={handleTrigger}
-              disabled={triggered || triggering}
+              disabled={reviewsActive || triggering}
               className={`px-5 py-2 rounded-lg font-medium transition-opacity ${
-                triggered
+                reviewsActive
                   ? "bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed opacity-50"
                   : "bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50"
               }`}
             >
-              {triggering ? "Triggering..." : triggered ? "Reviews Triggered" : "Trigger Reviews"}
+              {triggering ? "Triggering..." : reviewsActive ? "Reviews In Progress" : "Trigger Reviews"}
             </button>
           </div>
         </div>
