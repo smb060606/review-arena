@@ -178,7 +178,7 @@ export default function ScenarioPage() {
         </div>
         <p className="text-xs text-[var(--muted-foreground)] mb-4">
           Clicking &quot;Trigger Reviews&quot; sends the PR to both tools simultaneously. Each tool reviews its own
-          isolated copy &mdash; they cannot see each other&apos;s findings. Reviews typically take 1-3 minutes.
+          isolated copy &mdash; they cannot see each other&apos;s findings. Reviews typically take 5-7 minutes.
         </p>
 
         {triggerError && (

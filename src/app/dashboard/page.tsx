@@ -83,7 +83,7 @@ export default function DashboardPage() {
         <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--muted-foreground)]">
           <li><span className="font-medium text-[var(--foreground)]">Pick a scenario</span> &mdash; each one is a pull request that adds a new feature to the TeamForge API, with realistic bugs intentionally injected into the code</li>
           <li><span className="font-medium text-[var(--foreground)]">Trigger reviews</span> &mdash; this sends the PR to both CodeRabbit and GitHub Copilot simultaneously, each reviewing their own isolated copy</li>
-          <li><span className="font-medium text-[var(--foreground)]">Wait for results</span> &mdash; both tools analyze the code independently (typically 1-3 minutes each)</li>
+          <li><span className="font-medium text-[var(--foreground)]">Wait for results</span> &mdash; both tools analyze the code independently (typically 5-7 minutes each)</li>
           <li><span className="font-medium text-[var(--foreground)]">Compare findings</span> &mdash; see what each tool found side-by-side, then generate a neutral AI analysis of their performance</li>
           <li><span className="font-medium text-[var(--foreground)]">Reset &amp; repeat</span> &mdash; after reviewing the results, reset the environment to start fresh with new pull requests</li>
         </ol>
