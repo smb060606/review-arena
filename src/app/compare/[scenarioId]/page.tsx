@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { SCENARIOS } from "@/lib/pr-config";
 import { ScenarioResults, ComparisonAnalysis } from "@/types/reviews";
+import { ToolsBanner, ToolLabel } from "@/components/ToolsBanner";
 
 type LLMProvider = "anthropic" | "openai";
 
@@ -65,7 +66,9 @@ export default function ComparePage() {
         Comparison
       </div>
 
-      <h1 className="text-2xl font-bold mb-2">Comparison: {scenario.title}</h1>
+      <h1 className="text-2xl font-bold mb-4">Comparison: {scenario.title}</h1>
+
+      <ToolsBanner />
 
       {error && <p className="text-[var(--destructive)] mb-4">{error}</p>}
 
@@ -77,7 +80,7 @@ export default function ComparePage() {
           <div className="grid grid-cols-2 gap-4 mb-8">
             {/* CodeRabbit */}
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5">
-              <h3 className="font-semibold text-purple-400 mb-3">CodeRabbit</h3>
+              <div className="mb-3"><ToolLabel tool="coderabbit" /></div>
               <div className="text-sm text-[var(--muted-foreground)] mb-2">
                 {results.coderabbit.rawCommentCount} total comments
               </div>
@@ -98,7 +101,7 @@ export default function ComparePage() {
 
             {/* Copilot */}
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5">
-              <h3 className="font-semibold text-blue-400 mb-3">GitHub Copilot</h3>
+              <div className="mb-3"><ToolLabel tool="copilot" /></div>
               <div className="text-sm text-[var(--muted-foreground)] mb-2">
                 {results.copilot.rawCommentCount} total comments
               </div>

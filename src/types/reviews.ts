@@ -57,6 +57,9 @@ export interface Scenario {
   id: number;
   title: string;
   description: string;
+  beforeState: string;
+  whatThePrDoes: string;
+  filesChanged: string[];
   prTitle: string;
   injectedBugs: {
     description: string;

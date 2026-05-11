@@ -2,9 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { SCENARIOS } from "@/lib/pr-config";
+import { SCENARIOS, PROJECT_CONTEXT } from "@/lib/pr-config";
 import { useReviewPolling } from "@/hooks/useReviewPolling";
 import { ReviewToolStatus } from "@/types/reviews";
+import { ToolsBanner, ToolLabel } from "@/components/ToolsBanner";
 
 const STATUS_CONFIG: Record<ReviewToolStatus, { label: string; color: string; bg: string }> = {
   idle: { label: "Not Started", color: "text-gray-400", bg: "bg-gray-800" },
@@ -60,7 +61,9 @@ export default function ScenarioPage() {
   const copilotStatus = status?.copilot.status || "idle";
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 py-10">
+      <ToolsBanner />
+
       <div className="mb-2 text-sm text-[var(--muted-foreground)]">
         <button onClick={() => router.push("/dashboard")} className="hover:text-[var(--foreground)]">
           Dashboard
@@ -72,21 +75,79 @@ export default function ScenarioPage() {
       <h1 className="text-2xl font-bold mb-2">{scenario.title}</h1>
       <p className="text-[var(--muted-foreground)] mb-6">{scenario.description}</p>
 
+      {/* PR Context: Before / After / Files */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 mb-6">
+        <h3 className="font-semibold mb-4">Pull Request Context</h3>
+
+        <div className="space-y-4 text-sm">
+          <div>
+            <div className="font-medium text-[var(--foreground)] mb-1">Project being modified</div>
+            <p className="text-[var(--muted-foreground)]">
+              <a href={PROJECT_CONTEXT.repoUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--accent)] hover:underline">{PROJECT_CONTEXT.name}</a>
+              {" "}&mdash; {PROJECT_CONTEXT.description} Built with {PROJECT_CONTEXT.techStack}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[var(--muted)] rounded-lg p-4">
+              <div className="font-medium text-[var(--foreground)] mb-1 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gray-500 inline-block"></span>
+                Before this PR
+              </div>
+              <p className="text-[var(--muted-foreground)] text-xs">{scenario.beforeState}</p>
+            </div>
+            <div className="bg-[var(--muted)] rounded-lg p-4">
+              <div className="font-medium text-[var(--foreground)] mb-1 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                What this PR adds
+              </div>
+              <p className="text-[var(--muted-foreground)] text-xs">{scenario.whatThePrDoes}</p>
+            </div>
+          </div>
+
+          <div>
+            <div className="font-medium text-[var(--foreground)] mb-2">Files changed ({scenario.filesChanged.length})</div>
+            <div className="grid gap-1">
+              {scenario.filesChanged.map((file, i) => {
+                const isNew = file.includes("(new");
+                const isModified = file.includes("(modified");
+                return (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded font-mono text-[10px] ${
+                      isNew ? "bg-green-900/40 text-green-400" :
+                      isModified ? "bg-yellow-900/40 text-yellow-400" :
+                      "bg-gray-900/40 text-gray-400"
+                    }`}>
+                      {isNew ? "NEW" : isModified ? "MOD" : "FILE"}
+                    </span>
+                    <span className="text-[var(--muted-foreground)] font-mono">{file}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Bug inventory */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 mb-6">
-        <h3 className="font-semibold mb-3">Injected Bugs ({scenario.injectedBugs.length})</h3>
+        <h3 className="font-semibold mb-1">Injected Bugs ({scenario.injectedBugs.length})</h3>
+        <p className="text-xs text-[var(--muted-foreground)] mb-4">
+          These bugs were deliberately placed in the code. Both review tools will analyze the same code independently
+          to see how many they can find.
+        </p>
         <div className="grid gap-2">
           {scenario.injectedBugs.map((bug, i) => (
-            <div key={i} className="flex items-center gap-3 text-sm">
-              <span className={`w-16 text-xs font-mono ${
+            <div key={i} className="flex items-start gap-3 text-sm">
+              <span className={`w-16 shrink-0 text-xs font-mono ${
                 bug.severity === "CRITICAL" ? "text-red-400" :
                 bug.severity === "HIGH" ? "text-orange-400" :
                 bug.severity === "MEDIUM" ? "text-yellow-400" : "text-blue-400"
               }`}>
                 {bug.severity}
               </span>
-              <span className="w-24 text-xs text-[var(--muted-foreground)]">{bug.category}</span>
-              <span>{bug.description}</span>
+              <span className="w-24 shrink-0 text-xs text-[var(--muted-foreground)]">{bug.category}</span>
+              <span className="text-[var(--muted-foreground)]">{bug.description}</span>
             </div>
           ))}
         </div>
@@ -94,7 +155,7 @@ export default function ScenarioPage() {
 
       {/* Trigger + Status */}
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold">Review Status</h3>
           {!triggered && (
             <button
@@ -114,6 +175,10 @@ export default function ScenarioPage() {
             </button>
           )}
         </div>
+        <p className="text-xs text-[var(--muted-foreground)] mb-4">
+          Clicking &quot;Trigger Reviews&quot; sends the PR to both tools simultaneously. Each tool reviews its own
+          isolated copy &mdash; they cannot see each other&apos;s findings. Reviews typically take 1-3 minutes.
+        </p>
 
         {triggerError && (
           <p className="text-[var(--destructive)] text-sm mb-4">{triggerError}</p>
@@ -124,7 +189,7 @@ export default function ScenarioPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className={`p-4 rounded-lg border border-[var(--border)] ${STATUS_CONFIG[crStatus].bg}`}>
-            <div className="text-sm text-[var(--muted-foreground)] mb-1">CodeRabbit</div>
+            <div className="mb-2"><ToolLabel tool="coderabbit" /></div>
             <div className={`font-semibold ${STATUS_CONFIG[crStatus].color}`}>
               {STATUS_CONFIG[crStatus].label}
             </div>
@@ -135,7 +200,7 @@ export default function ScenarioPage() {
             )}
           </div>
           <div className={`p-4 rounded-lg border border-[var(--border)] ${STATUS_CONFIG[copilotStatus].bg}`}>
-            <div className="text-sm text-[var(--muted-foreground)] mb-1">GitHub Copilot</div>
+            <div className="mb-2"><ToolLabel tool="copilot" /></div>
             <div className={`font-semibold ${STATUS_CONFIG[copilotStatus].color}`}>
               {STATUS_CONFIG[copilotStatus].label}
             </div>
