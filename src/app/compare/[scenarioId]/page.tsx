@@ -53,8 +53,9 @@ export default function ComparePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: selectedProvider }),
       });
-      if (!res.ok) throw new Error("Failed to generate analysis");
-      setAnalysis(await res.json());
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate analysis");
+      setAnalysis(data);
     } catch (err) {
       setError((err as Error).message);
     }
